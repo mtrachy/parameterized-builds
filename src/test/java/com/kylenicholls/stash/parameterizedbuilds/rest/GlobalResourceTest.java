@@ -14,20 +14,28 @@ import com.google.gson.Gson;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.atlassian.bitbucket.auth.AuthenticationContext;
 import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.user.ApplicationUser;
 import com.kylenicholls.stash.parameterizedbuilds.ciserver.Jenkins;
+import com.kylenicholls.stash.parameterizedbuilds.ciserver.JenkinsConnection;
 import com.kylenicholls.stash.parameterizedbuilds.item.Server;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({GlobalResource.class, JenkinsConnection.class})
 public class GlobalResourceTest {
     private GlobalResource rest;
     private Jenkins jenkins;
+    private JenkinsConnection jenkinsConn;
     private AuthenticationContext authContext;
     private ApplicationUser user;
     private UriInfo ui;
@@ -52,6 +60,11 @@ public class GlobalResourceTest {
         when(authContext.isAuthenticated()).thenReturn(true);
         when(authContext.getCurrentUser()).thenReturn(user);
         when(user.getSlug()).thenReturn(USER_SLUG);
+
+        jenkinsConn = mock(JenkinsConnection.class);
+        PowerMockito.whenNew(JenkinsConnection.class)
+            .withArguments(jenkins)
+            .thenReturn(jenkinsConn);
     }
     
     @Test
@@ -83,7 +96,7 @@ public class GlobalResourceTest {
     @Test
     public void testValidateServerReturnsSuccessMessage(){
         String expected = "Connection successful";
-        when(jenkins.testConnection(globalServer)).thenReturn(expected);
+        when(jenkinsConn.testConnection(globalServer)).thenReturn(expected);
         Response actual = rest.validate(ui, globalServer);
 
         assertEquals(expected, actual.getEntity());
@@ -92,7 +105,7 @@ public class GlobalResourceTest {
     @Test
     public void testValidateServerReturnsOkStatus(){
         String expected = "Connection successful";
-        when(jenkins.testConnection(globalServer)).thenReturn(expected);
+        when(jenkinsConn.testConnection(globalServer)).thenReturn(expected);
         Response actual = rest.validate(ui, globalServer);
 
         assertEquals(Response.Status.OK.getStatusCode(), actual.getStatus());
@@ -101,7 +114,7 @@ public class GlobalResourceTest {
     @Test
     public void testValidateServerReturnsFailureMessage(){
         String expected = "Failed to establish connection";
-        when(jenkins.testConnection(globalServer)).thenReturn(expected);
+        when(jenkinsConn.testConnection(globalServer)).thenReturn(expected);
         Response actual = rest.validate(ui, globalServer);
 
         assertEquals(expected, actual.getEntity());
@@ -110,7 +123,7 @@ public class GlobalResourceTest {
     @Test
     public void testValidateServerReturnsFailureStatus(){
         String expected = "Failed to establish connection";
-        when(jenkins.testConnection(globalServer)).thenReturn(expected);
+        when(jenkinsConn.testConnection(globalServer)).thenReturn(expected);
         Response actual = rest.validate(ui, globalServer);
 
         assertEquals(400, actual.getStatus());
@@ -120,7 +133,7 @@ public class GlobalResourceTest {
     public void testValidateServerPreservesToken(){
         when(jenkins.getJenkinsServer(null)).thenReturn(globalServer);
         Server testServer = rest.mapToServer(globalServer.asMap());
-        when(jenkins.testConnection(testServer)).thenReturn( "Connection successful");
+        when(jenkinsConn.testConnection(testServer)).thenReturn( "Connection successful");
         testServer.setToken(null);
         rest.validate(ui, testServer);
 
