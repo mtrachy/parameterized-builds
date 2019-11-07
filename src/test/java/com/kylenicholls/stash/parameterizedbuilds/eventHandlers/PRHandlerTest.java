@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -33,7 +34,8 @@ public class PRHandlerTest {
     private final String PROJECT_KEY = "projectkey";
     private final String PROJECT_NAME = "projectname";
     private final String PR_URL = "http://pruri";
-    private final Server globalServer = new Server("globalurl", null, "globaluser", "globaltoken", false, false);
+    private final Server globalServer = new Server("globalurl", null, "globaluser", "globaltoken",
+            false, false);
     private SettingsService settingsService;
     private Jenkins jenkins;
     private Repository repository;
@@ -59,7 +61,7 @@ public class PRHandlerTest {
         when(project.getName()).thenReturn(PROJECT_NAME);
         when(project.getKey()).thenReturn(PROJECT_KEY);
         when(settingsService.getSettings(repository)).thenReturn(settings);
-        when(jenkins.getJenkinsServer(null)).thenReturn(globalServer);
+        when(jenkins.getJenkinsServer(isNull(), any())).thenReturn(globalServer);
         when(settingsService.getHook(any())).thenReturn(repoHook);
         when(repoHook.isEnabled()).thenReturn(true);
 
@@ -71,11 +73,13 @@ public class PRHandlerTest {
 
     @Test
     public void testNoSettings() throws IOException {
-        Job job = jobBuilder.triggers(new String[] { "PRDECLINED" }).prDestRegex("test_branch").build();
+        Job job = jobBuilder.triggers(new String[] { "PRDECLINED" }).prDestRegex("test_branch")
+                .build();
         jobs.add(job);
         when(settingsService.getSettings(repository)).thenReturn(null);
         PullRequestDeclinedEvent declinedEvent = eventFactory.getMockedDeclinedEvent(repository);
-        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
+        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins,
+                declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
         PRHandler spyHandler = spy(handler);
         spyHandler.run();
 
@@ -84,11 +88,13 @@ public class PRHandlerTest {
 
     @Test
     public void testPrDestRegexMatches() throws IOException {
-        Job job = jobBuilder.triggers(new String[] { "PRDECLINED" }).prDestRegex("test_branch").build();
+        Job job = jobBuilder.triggers(new String[] { "PRDECLINED" }).prDestRegex("test_branch")
+                .build();
         jobs.add(job);
         PullRequestDeclinedEvent declinedEvent = eventFactory.getMockedDeclinedEvent(repository);
         when(declinedEvent.getPullRequest().getToRef().getDisplayId()).thenReturn("test_branch");
-        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
+        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins,
+                declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
         PRHandler spyHandler = spy(handler);
         spyHandler.run();
 
@@ -97,11 +103,14 @@ public class PRHandlerTest {
 
     @Test
     public void testPrDestRegexDoesNotMatch() throws IOException {
-        Job job = jobBuilder.triggers(new String[]{"PRDECLINED"}).prDestRegex("test_branch").build();
+        Job job = jobBuilder.triggers(new String[]{"PRDECLINED"}).prDestRegex("test_branch")
+                .build();
         jobs.add(job);
         PullRequestDeclinedEvent declinedEvent = eventFactory.getMockedDeclinedEvent(repository);
-        when(declinedEvent.getPullRequest().getToRef().getDisplayId()).thenReturn("not_desired_branch");
-        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
+        when(declinedEvent.getPullRequest().getToRef().getDisplayId())
+                .thenReturn("not_desired_branch");
+        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins,
+                declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
         PRHandler spyHandler = spy(handler);
         spyHandler.run();
 
@@ -114,7 +123,8 @@ public class PRHandlerTest {
         jobs.add(job);
         when(repoHook.isEnabled()).thenReturn(false);
         PullRequestDeclinedEvent declinedEvent = eventFactory.getMockedDeclinedEvent(repository);
-        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
+        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins,
+                declinedEvent, PR_URL, Job.Trigger.PRDECLINED);
         PRHandler spyHandler = spy(handler);
         spyHandler.run();
 
@@ -126,7 +136,8 @@ public class PRHandlerTest {
         Job job = jobBuilder.triggers(new String[] { "PRDECLINED" }).build();
         jobs.add(job);
         PullRequestOpenedEvent openedEvent = eventFactory.getMockedOpenedEvent(repository);
-        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, openedEvent, PR_URL, Job.Trigger.PROPENED);
+        PRHandler handler = new PRHandler(settingsService, pullRequestService, jenkins, openedEvent,
+                PR_URL, Job.Trigger.PROPENED);
         PRHandler spyHandler = spy(handler);
         spyHandler.run();
 

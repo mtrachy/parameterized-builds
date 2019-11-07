@@ -32,8 +32,8 @@ public class RefDeletedHandlerTest {
     private final String PROJECT_KEY = "projectkey";
     private final String COMMIT = "commithash";
     private final String url = "http://url";
-    private final Server projectServer = new Server("projecturl", null, "projectuser", "projecttoken",
-            false, false);
+    private final Server projectServer = new Server("projecturl", null, "projectuser",
+            "projecttoken", false, false);
     private Settings settings;
     private RefChange refChange;
     private MinimalRef minimalRef;
@@ -64,7 +64,7 @@ public class RefDeletedHandlerTest {
         when(settingsService.getSettings(any())).thenReturn(settings);
         when(repository.getProject()).thenReturn(project);
         when(project.getKey()).thenReturn(PROJECT_KEY);
-        when(jenkins.getJenkinsServer(project.getKey())).thenReturn(projectServer);
+        when(jenkins.getJenkinsServer(eq(project.getKey()), any())).thenReturn(projectServer);
         when(refChange.getType()).thenReturn(RefChangeType.DELETE);
 
         when(minimalRef.getId()).thenReturn(BRANCH_REF);
@@ -78,7 +78,8 @@ public class RefDeletedHandlerTest {
     public void testBranchDeletedAndTriggerIsDelete() {
         Job job = jobBuilder.triggers(new String[] { "delete" }).build();
         jobs.add(job);
-        RefDeletedHandler handler = new RefDeletedHandler(settingsService, jenkins, commitService, repository, refChange, url, user);
+        RefDeletedHandler handler = new RefDeletedHandler(settingsService, jenkins, commitService,
+                repository, refChange, url, user);
         RefDeletedHandler spyHandler = spy(handler);
         spyHandler.run();
 

@@ -1,8 +1,6 @@
 package com.kylenicholls.stash.parameterizedbuilds.ciserver;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,12 +29,11 @@ import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.webresource.api.assembler.RequiredResources;
 import com.atlassian.webresource.api.assembler.WebResourceAssembler;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.kylenicholls.stash.parameterizedbuilds.item.Server;
 import com.kylenicholls.stash.parameterizedbuilds.item.UserToken;
 
 public class CIServletTest {
-    private final String USER_TOKEN_PREFIX = "jenkinsToken-";
-    private final String PROJECT_KEY_PREFIX = "projectKey-";
     private final String SOY_TEMPLATE = 
             "com.kylenicholls.stash.parameterized-builds:jenkins-admin-soy";
     private final String PROJECT_KEY = "projkey";
@@ -93,11 +89,12 @@ public class CIServletTest {
     public void testDoGetGlobalServer() throws ServletException, IOException, SoyException {
         when(req.getPathInfo()).thenReturn(GLOBAL_PATH);
         Server server = new Server("baseurl", null, null, null, false, false);
-        when(jenkins.getJenkinsServer(null)).thenReturn(server);
+        List<Server> servers = Lists.newArrayList(server);
+        when(jenkins.getJenkinsServers(null)).thenReturn(servers);
         servlet.doGet(req, resp);
 
         Map<String, Object> data = ImmutableMap.of(
-                CIServer.SERVER, server,
+                CIServer.SERVER, servers,
                 CONTEXT_KEY, BITBUCKET_CONTEXT);
         verify(renderer, times(1))
                 .render(resp.getWriter(), SOY_TEMPLATE, "jenkins.admin.settings", data);
@@ -106,11 +103,11 @@ public class CIServletTest {
     @Test
     public void testDoGetGlobalServerNull() throws ServletException, IOException, SoyException {
         when(req.getPathInfo()).thenReturn(GLOBAL_PATH);
-        when(jenkins.getJenkinsServer(null)).thenReturn(null);
+        when(jenkins.getJenkinsServers(null)).thenReturn(Lists.newArrayList());
         servlet.doGet(req, resp);
 
         Map<String, Object> data = ImmutableMap.of(
-                CIServer.SERVER, "",
+                CIServer.SERVER, Lists.newArrayList(),
                 CONTEXT_KEY, BITBUCKET_CONTEXT);
         verify(renderer, times(1))
                 .render(resp.getWriter(), SOY_TEMPLATE, "jenkins.admin.settings", data);
@@ -120,7 +117,7 @@ public class CIServletTest {
     public void testDoGetAccountServerNull() throws ServletException, IOException, SoyException {
         List<UserToken> projectTokens = new ArrayList<>();
         when(req.getPathInfo()).thenReturn(ACCOUNT_PATH);
-        when(jenkins.getJenkinsServer(null)).thenReturn(null);
+        when(jenkins.getJenkinsServers(null)).thenReturn(Lists.newArrayList());
         when(jenkins.getAllUserTokens(user, new ArrayList<String>(), projectService))
                 .thenReturn(projectTokens);
         servlet.doGet(req, resp);
@@ -138,11 +135,12 @@ public class CIServletTest {
     public void testDoGetProjectServer() throws ServletException, IOException, SoyException {
         when(req.getPathInfo()).thenReturn(PROJECT_PATH + PROJECT_KEY);
         Server server = new Server("baseurl", null, null, null, false, false);
-        when(jenkins.getJenkinsServer(PROJECT_KEY)).thenReturn(server);
+        List<Server> servers = Lists.newArrayList(server);
+        when(jenkins.getJenkinsServers(PROJECT_KEY)).thenReturn(servers);
         servlet.doGet(req, resp);
 
         Map<String, Object> data = ImmutableMap.of(
-                CIServer.SERVER, server,
+                CIServer.SERVER, servers,
                 ProjectServer.PROJECT_KEY, PROJECT_KEY,
                 CONTEXT_KEY, BITBUCKET_CONTEXT);
         verify(renderer, times(1))
@@ -152,11 +150,11 @@ public class CIServletTest {
     @Test
     public void testDoGetProjectServerNull() throws ServletException, IOException, SoyException {
         when(req.getPathInfo()).thenReturn(PROJECT_PATH + PROJECT_KEY);
-        when(jenkins.getJenkinsServer(PROJECT_KEY)).thenReturn(null);
+        when(jenkins.getJenkinsServers(PROJECT_KEY)).thenReturn(Lists.newArrayList());
         servlet.doGet(req, resp);
 
         Map<String, Object> data = ImmutableMap.of(
-                CIServer.SERVER, "",
+                CIServer.SERVER, Lists.newArrayList(),
                 ProjectServer.PROJECT_KEY, PROJECT_KEY,
                 CONTEXT_KEY, BITBUCKET_CONTEXT);
         verify(renderer, times(1))
