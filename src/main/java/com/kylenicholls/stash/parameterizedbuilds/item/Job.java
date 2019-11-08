@@ -272,7 +272,7 @@ public class Job {
             //java 8 lazy initialization
             if (buildUrl.contains(encodedVar) && bitbucketVariables.fetch(variable) != null) {
                 try {
-                    buildUrl = buildUrl.replace(encodedVar, 
+                    buildUrl = buildUrl.replace(encodedVar,
                                     URLEncoder.encode(bitbucketVariables.fetch(variable), "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     buildUrl = buildUrl.replace(encodedVar, bitbucketVariables.fetch(variable));
